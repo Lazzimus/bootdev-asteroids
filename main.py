@@ -6,6 +6,8 @@ from logger import log_state
 from player import Player
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
+from powerup import Powerup
+from powerupfield import PowerupField
 from logger import log_event
 from shot import Shot
 
@@ -26,12 +28,16 @@ def main():
     drawable = pygame.sprite.Group()
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
+    powerups = pygame.sprite.Group()
     Player.containers = (updatable, drawable)
     Asteroid.containers = (asteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
     AsteroidField.containers = (updatable)
+    Powerup.containers = (powerups, updatable, drawable)
+    PowerupField.containers = (updatable)
 
     asteroid_field = AsteroidField()
+    powerup_field = PowerupField()
     player = Player((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
 
 
@@ -49,10 +55,20 @@ def main():
                     asteroid.split()
                     shot.kill()
             if asteroid.collides_with(player):
-                log_event("player_hit")
-                print("Game Over!")
-                sys.exit()
-        
+                if player.is_invincible:
+                    asteroid.split()
+                    log_event("player_hit_blocked")
+                else:
+                    log_event("player_hit")
+                    print("Game Over!")
+                    sys.exit()
+
+        for powerup in powerups:
+            if powerup.collides_with(player):
+                log_event("powerup_collected")
+                powerup.apply(player)
+                powerup.kill()
+
         for drawables in drawable:
             drawables.draw(screen)
         pygame.display.flip()
